@@ -77,3 +77,15 @@ class EstudioDicom:
         for ds in self.__datasets:
             cortes.append(ds.pixel_array)
         self.__pixeles = np.stack(cortes, axis=-1)
+
+        # Escalar cada corte al doble y reconstruir el volumen 3D
+        cortes_dobles = []
+        for ds in self.__datasets:
+            cortes_dobles.append(cv2.resize(ds.pixel_array, None, fx=2, fy=2,
+                                            interpolation=cv2.INTER_LINEAR))
+        self.__volumen = np.stack(cortes_dobles, axis=-1)
+        # Al duplicar el tamaño, cada píxel mide la mitad en mm
+        self.__voxel_volumen = (self.__voxel[0] / 2, self.__voxel[1] / 2, self.__voxel[2])
+
+        self.__volumen_corregido = None
+        self.__angulo = 0

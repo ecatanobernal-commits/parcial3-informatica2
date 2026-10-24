@@ -89,3 +89,40 @@ class EstudioDicom:
 
         self.__volumen_corregido = None
         self.__angulo = 0
+
+    def verNombre(self):
+        return self.__nombre
+
+    def verCarpeta(self):
+        return self.__carpeta
+
+    def verFilas(self):
+        return self.__filas
+
+    def verColumnas(self):
+        return self.__columnas
+
+    def verPaciente(self):
+        return self.__paciente
+
+    def verModalidad(self):
+        return self.__modalidad
+
+    def verVoxel(self):
+        return self.__voxel
+
+    def verPixeles(self):
+        return self.__pixeles
+
+    def verVolumen(self):
+        return self.__volumen
+
+    def verVolumenCorregido(self):
+        return self.__volumen_corregido
+
+    def verPlanoAdquisicion(self):
+        if self.__eje == 0:
+            return "sagital"
+        elif self.__eje == 1:
+            return "coronal"
+        return "transversal"

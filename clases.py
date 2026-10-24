@@ -312,3 +312,55 @@ Vóxel del volumen escalado:   {self.__voxel_volumen} mm
         print(f"Umbral usado: {umb}")
         print(f"Objetos (contando el fondo): {elem}")
         return candidatos
+
+    def marcarElemento(self, E):
+        # Dibuja un círculo sobre el elemento E elegido y calcula su área
+        mask = self.__seg_mask
+        mm_fila, mm_col = self.__seg_mm
+        tam_kernel, iteraciones = self.__seg_parametros
+
+        area_px = np.sum(mask == E)
+        area_mm2 = area_px * mm_fila * mm_col
+        filas_obj, cols_obj = np.where(mask == E)
+        y1, y2 = np.min(filas_obj), np.max(filas_obj)
+        x1, x2 = np.min(cols_obj), np.max(cols_obj)
+        alto_mm = (y2 - y1 + 1) * mm_fila
+        ancho_mm = (x2 - x1 + 1) * mm_col
+        centro = (int(np.mean(cols_obj)), int(np.mean(filas_obj)))      # (x, y)
+        radio = int(max(x2 - x1, y2 - y1) / 2) + 10
+
+        # Corte normalizado (uint8) pasado a RGB para dibujar a color
+        rgb = cv2.cvtColor(self.__seg_corte, cv2.COLOR_GRAY2RGB)
+        grosor = max(1, rgb.shape[1] // 300)
+        escala = rgb.shape[1] / 900
+        cv2.circle(rgb, centro, radio, (255, 0, 0), grosor)
+        texto = f"{ancho_mm:.1f} x {alto_mm:.1f} mm"
+        cv2.putText(rgb, texto, (max(centro[0] - radio, 0), max(centro[1] - radio - 10, 20)),
+                    cv2.FONT_HERSHEY_SIMPLEX, escala, (255, 255, 0), grosor, cv2.LINE_AA)
+
+        binaria = cv2.cvtColor(self.__seg_binaria, cv2.COLOR_GRAY2RGB)
+        cv2.circle(binaria, centro, radio, (255, 128, 0), grosor * 2)
+
+        recorte = rgb[max(y1 - 20, 0):y2 + 20, max(x1 - 20, 0):x2 + 20]
+
+        fig = plt.figure(figsize=(16, 6))
+        ax1 = fig.add_subplot(1, 3, 1)
+        ax1.imshow(rgb)
+        ax1.set_title(f"Elemento {E}: área ≈ {area_mm2:.1f} mm²")
+        ax2 = fig.add_subplot(1, 3, 2)
+        ax2.imshow(binaria)
+        ax2.set_title(f"Binaria + apertura (kernel {tam_kernel}, {iteraciones} it.)")
+        ax3 = fig.add_subplot(1, 3, 3)
+        ax3.imshow(recorte)
+        ax3.set_title(f"Región recortada: {ancho_mm:.1f} x {alto_mm:.1f} mm")
+        fig.tight_layout()
+
+        nombre_grafico = f"{self.__nombre}_segmentacion_{self.__seg_nombre}.png"
+        nombre_imagen = f"{self.__nombre}_circulo_{self.__seg_nombre}.png"
+        fig.savefig(nombre_grafico)
+        cv2.imwrite(nombre_imagen, cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR))
+        plt.show()
+
+        print(f"Área del elemento {E}: {area_px} píxeles = {area_mm2:.2f} mm²")
+        print(f"Dimensiones: {ancho_mm:.2f} mm de ancho x {alto_mm:.2f} mm de alto")
+        return area_mm2, nombre_grafico, nombre_imagen

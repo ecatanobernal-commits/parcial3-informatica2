@@ -188,3 +188,29 @@ Vóxel del volumen escalado:   {self.__voxel_volumen} mm
             corte = np.rot90(corte)
             mm_fila, mm_col = mm_col, mm_fila
         return corte, mm_fila, mm_col, planos[plano]
+
+    def corregirAngulo(self, grados):
+        # Rota cada corte del volumen alrededor del centro de la imagen
+        filas, columnas, n = self.__volumen.shape
+        MR = cv2.getRotationMatrix2D((columnas / 2, filas / 2), grados, 1)
+        rotados = []
+        for k in range(n):
+            rotados.append(cv2.warpAffine(self.__volumen[:, :, k], MR, (columnas, filas)))
+        self.__volumen_corregido = np.stack(rotados, axis=-1)
+        self.__angulo = grados
+
+        k = n // 2
+        fig = plt.figure(figsize=(12, 6))
+        ax1 = fig.add_subplot(1, 2, 1)
+        ax1.imshow(self.__volumen[:, :, k], cmap="gray")
+        ax1.set_title(f"Corte {k} original")
+        ax1.axis("off")
+        ax2 = fig.add_subplot(1, 2, 2)
+        ax2.imshow(self.__volumen_corregido[:, :, k], cmap="gray")
+        ax2.set_title(f"Corte {k} rotado {grados}°")
+        ax2.axis("off")
+        fig.tight_layout()
+        nombre_imagen = f"{self.__nombre}_rotado_{grados}.png"
+        fig.savefig(nombre_imagen)
+        plt.show()
+        return MR, nombre_imagen

@@ -49,3 +49,15 @@ class EstudioDicom:
         datasets = []
         for f in archivos:
             datasets.append(pydicom.dcmread(os.path.join(carpeta, f)))
+
+        # Ordenar los cortes por ImagePositionPatient en el eje que cambia
+        posiciones = []
+        for ds in datasets:
+            posiciones.append([float(v) for v in ds.ImagePositionPatient])
+        posiciones = np.array(posiciones)
+        cambio = np.max(posiciones, axis=0) - np.min(posiciones, axis=0)
+        self.__eje = int(np.argmax(cambio))      # 0 = x, 1 = y, 2 = z
+        orden = np.argsort(posiciones[:, self.__eje])
+        self.__datasets = []
+        for i in orden:
+            self.__datasets.append(datasets[i])

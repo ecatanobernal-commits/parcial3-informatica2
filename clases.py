@@ -248,3 +248,67 @@ Vóxel del volumen escalado:   {self.__voxel_volumen} mm
         cv2.imwrite(nombre_imagen, ecualizado)
         plt.show()
         return nombre_grafico, nombre_imagen
+
+    def segmentar(self, plano, indice, umbral, tam_kernel, iteraciones):
+        corte, mm_fila, mm_col, nombre_plano = self.obtenerCorte(plano, indice)
+
+        # aspect: cuántos mm mide una fila comparado con una columna.
+        # Se corrige estirando el corte para que cada píxel quede cuadrado,
+        # así la imagen, el círculo y el área quedan con la proporción real.
+        aspecto = mm_fila / mm_col
+        if mm_fila > mm_col:
+            corte = cv2.resize(corte, None, fx=1, fy=aspecto)
+            mm_fila = mm_col
+        elif mm_col > mm_fila:
+            corte = cv2.resize(corte, None, fx=1 / aspecto, fy=1)
+            mm_col = mm_fila
+        corte8 = normalizar(corte)
+
+        # Binarizar: los huecos (zonas oscuras) quedan en blanco
+        if umbral == 0:
+            umb, imgB = cv2.threshold(corte8, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        else:
+            umb, imgB = cv2.threshold(corte8, umbral, 255, cv2.THRESH_BINARY_INV)
+
+        # Apertura: quita los puntos blancos pequeños
+        kernel = np.ones((tam_kernel, tam_kernel), np.uint8)
+        imgA = cv2.morphologyEx(imgB, cv2.MORPH_OPEN, kernel, iterations=iteraciones)
+
+        # Etiquetar los objetos blancos
+        elem, mask = cv2.connectedComponents(imgA)
+
+        # Los objetos que tocan el borde son el aire de afuera, no huecos internos
+        borde = np.concatenate((mask[0, :], mask[-1, :], mask[:, 0], mask[:, -1]))
+        candidatos = []
+        for i in range(1, elem):
+            if i not in borde:
+                area_mm2 = np.sum(mask == i) * mm_fila * mm_col
+                candidatos.append((i, area_mm2))
+
+        # Se guarda todo para poder marcar después el elemento que elija el usuario
+        self.__seg_corte = corte8
+        self.__seg_binaria = imgA
+        self.__seg_mask = mask
+        self.__seg_mm = (mm_fila, mm_col)
+        self.__seg_nombre = f"{nombre_plano}{indice}"
+        self.__seg_parametros = (tam_kernel, iteraciones)
+
+        fig = plt.figure(figsize=(16, 6))
+        ax1 = fig.add_subplot(1, 3, 1)
+        ax1.imshow(corte8, cmap="gray")
+        ax1.set_title(f"Corte {nombre_plano} {indice} (aspect {aspecto:.2f} corregido)")
+        ax2 = fig.add_subplot(1, 3, 2)
+        ax2.imshow(imgA, cmap="gray")
+        ax2.set_title(f"Umbral {umb:.0f} + apertura (kernel {tam_kernel}, {iteraciones} it.)")
+        ax3 = fig.add_subplot(1, 3, 3)
+        ax3.imshow(mask, cmap="nipy_spectral")
+        for num, area in candidatos:
+            filas_obj, cols_obj = np.where(mask == num)
+            ax3.text(np.mean(cols_obj), np.mean(filas_obj), str(num), color="white", fontsize=9)
+        ax3.set_title(f"Elementos encontrados: {len(candidatos)}")
+        fig.tight_layout()
+        plt.show()
+
+        print(f"Umbral usado: {umb}")
+        print(f"Objetos (contando el fondo): {elem}")
+        return candidatos

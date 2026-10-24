@@ -364,3 +364,27 @@ Vóxel del volumen escalado:   {self.__voxel_volumen} mm
         print(f"Área del elemento {E}: {area_px} píxeles = {area_mm2:.2f} mm²")
         print(f"Dimensiones: {ancho_mm:.2f} mm de ancho x {alto_mm:.2f} mm de alto")
         return area_mm2, nombre_grafico, nombre_imagen
+
+
+class Sistema:
+    def __init__(self):
+        self.__estudios = {}
+
+    def ingresarEstudio(self, estudio):
+        self.__estudios[estudio.verNombre()] = estudio
+
+    def verEstudio(self, nombre):
+        return self.__estudios.get(nombre, False)
+
+    def verNombres(self):
+        return list(self.__estudios.keys())
+
+    def existe(self, nombre):
+        return nombre in self.__estudios
+
+    def buscar(self, texto):
+        encontrados = []
+        for nombre in self.__estudios:
+            if texto.lower() in nombre.lower():
+                encontrados.append(nombre)
+        return encontrados

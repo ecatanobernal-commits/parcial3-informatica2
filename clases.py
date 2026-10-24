@@ -214,3 +214,37 @@ Vóxel del volumen escalado:   {self.__voxel_volumen} mm
         fig.savefig(nombre_imagen)
         plt.show()
         return MR, nombre_imagen
+
+    def ecualizar(self, indice):
+        # Trabaja sobre una copia para no modificar el volumen original
+        copia = self.__volumen.copy()
+        corte8 = normalizar(copia[:, :, indice])
+        ecualizado = cv2.equalizeHist(corte8)
+
+        fig = plt.figure(figsize=(14, 8))
+        ax1 = fig.add_subplot(2, 2, 1)
+        ax1.imshow(corte8, cmap="gray", vmin=0, vmax=255)
+        ax1.set_title(f"Corte {indice} normalizado (uint8)")
+        ax1.axis("off")
+        ax2 = fig.add_subplot(2, 2, 2)
+        ax2.imshow(ecualizado, cmap="gray", vmin=0, vmax=255)
+        ax2.set_title(f"Corte {indice} ecualizado")
+        ax2.axis("off")
+        ax3 = fig.add_subplot(2, 2, 3)
+        ax3.hist(corte8.ravel(), bins=256, range=(0, 256))
+        ax3.set_title("Histograma normalizado")
+        ax3.set_xlabel("Nivel de gris")
+        ax3.set_ylabel("Número de píxeles")
+        ax4 = fig.add_subplot(2, 2, 4)
+        ax4.hist(ecualizado.ravel(), bins=256, range=(0, 256), color="orange")
+        ax4.set_title("Histograma ecualizado")
+        ax4.set_xlabel("Nivel de gris")
+        ax4.set_ylabel("Número de píxeles")
+        fig.tight_layout()
+
+        nombre_grafico = f"{self.__nombre}_ecualizacion_corte{indice}.png"
+        nombre_imagen = f"{self.__nombre}_ecualizado_corte{indice}.png"
+        fig.savefig(nombre_grafico)
+        cv2.imwrite(nombre_imagen, ecualizado)
+        plt.show()
+        return nombre_grafico, nombre_imagen

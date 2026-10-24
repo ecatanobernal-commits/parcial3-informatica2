@@ -22,3 +22,12 @@ def validar_decimal(mensaje):
             return float(input(mensaje))
         except ValueError:
             print("Debe ingresar un número")
+
+
+def normalizar(corte):
+    # Lleva los valores del corte al rango 0-255 y los pasa a uint8
+    img = np.array(corte, np.float32)
+    img = img - np.min(img)
+    if np.max(img) > 0:
+        img = img * 255 / np.max(img)
+    return img.astype(np.uint8)

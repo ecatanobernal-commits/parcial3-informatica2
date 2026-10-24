@@ -31,3 +31,21 @@ def normalizar(corte):
     if np.max(img) > 0:
         img = img * 255 / np.max(img)
     return img.astype(np.uint8)
+
+
+class EstudioDicom:
+    def __init__(self, nombre, carpeta):
+        self.__nombre = nombre
+        self.__carpeta = carpeta
+
+        # Leer todos los .dcm de la carpeta
+        archivos = []
+        for f in os.listdir(carpeta):
+            if f.lower().endswith(".dcm"):
+                archivos.append(f)
+        if len(archivos) == 0:
+            raise FileNotFoundError("La carpeta no tiene archivos .dcm")
+
+        datasets = []
+        for f in archivos:
+            datasets.append(pydicom.dcmread(os.path.join(carpeta, f)))

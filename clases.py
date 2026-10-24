@@ -71,3 +71,9 @@ class EstudioDicom:
         self.__voxel = (float(ds.PixelSpacing[0]),     # alto (mm)
                         float(ds.PixelSpacing[1]),     # largo (mm)
                         float(ds.SliceThickness))      # ancho (mm)
+
+        # Matriz de píxeles original (filas, columnas, cortes)
+        cortes = []
+        for ds in self.__datasets:
+            cortes.append(ds.pixel_array)
+        self.__pixeles = np.stack(cortes, axis=-1)

@@ -141,3 +141,50 @@ Matriz de píxeles original: {self.__pixeles.shape} {self.__pixeles.dtype}
 Volumen 3D (cortes al doble): {self.__volumen.shape}
 Vóxel del volumen escalado:   {self.__voxel_volumen} mm
 """
+
+    def tamanoPlano(self, plano):
+        # Cantidad de cortes que hay en un plano: 1 transversal, 2 coronal, 3 sagital
+        eje = self.__ejeDelPlano(plano)
+        if eje == 2:
+            return self.__volumen.shape[2]
+        elif eje == 0:
+            return self.__volumen.shape[0]
+        return self.__volumen.shape[1]
+
+    def __ejeDelPlano(self, plano):
+        # Devuelve en qué eje del volumen se mueve cada plano.
+        # El eje 2 del volumen es siempre el de los cortes originales.
+        planos = {1: "transversal", 2: "coronal", 3: "sagital"}
+        nombre = planos[plano]
+        if nombre == self.verPlanoAdquisicion():
+            return 2
+        if self.__eje == 2:                  # cortes transversales
+            if nombre == "coronal":
+                return 0
+            return 1
+        if self.__eje == 0:                  # cortes sagitales
+            if nombre == "coronal":
+                return 1
+            return 0
+        if nombre == "transversal":          # cortes coronales
+            return 0
+        return 1
+
+    def obtenerCorte(self, plano, indice):
+        # Devuelve el corte, los mm de cada fila, los mm de cada columna y el nombre del plano
+        planos = {1: "transversal", 2: "coronal", 3: "sagital"}
+        alto, largo, ancho = self.__voxel_volumen
+        eje = self.__ejeDelPlano(plano)
+        if eje == 2:
+            return self.__volumen[:, :, indice], alto, largo, planos[plano]
+        if eje == 0:
+            corte = self.__volumen[indice, :, :]
+            mm_fila, mm_col = largo, ancho
+        else:
+            corte = self.__volumen[:, indice, :]
+            mm_fila, mm_col = alto, ancho
+        if self.__eje == 2:
+            # los cortes quedan como columnas: se gira para dejar la cabeza arriba
+            corte = np.rot90(corte)
+            mm_fila, mm_col = mm_col, mm_fila
+        return corte, mm_fila, mm_col, planos[plano]

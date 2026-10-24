@@ -126,3 +126,18 @@ class EstudioDicom:
         elif self.__eje == 1:
             return "coronal"
         return "transversal"
+
+    def __str__(self):
+        return f"""
+========== ESTUDIO DICOM: {self.__nombre} ==========
+Carpeta:            {self.__carpeta}
+Paciente:           {self.__paciente}
+Modalidad:          {self.__modalidad}
+Filas x columnas:   {self.__filas} x {self.__columnas}
+Número de cortes:   {self.__pixeles.shape[2]}
+Plano de los cortes: {self.verPlanoAdquisicion()}
+Tamaño del vóxel (alto, largo, ancho): {self.__voxel} mm
+Matriz de píxeles original: {self.__pixeles.shape} {self.__pixeles.dtype}
+Volumen 3D (cortes al doble): {self.__volumen.shape}
+Vóxel del volumen escalado:   {self.__voxel_volumen} mm
+"""

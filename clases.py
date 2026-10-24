@@ -61,3 +61,13 @@ class EstudioDicom:
         self.__datasets = []
         for i in orden:
             self.__datasets.append(datasets[i])
+
+        # Información extraída del dataset
+        ds = self.__datasets[0]
+        self.__filas = int(ds.Rows)
+        self.__columnas = int(ds.Columns)
+        self.__paciente = str(ds.PatientName)
+        self.__modalidad = str(ds.Modality)
+        self.__voxel = (float(ds.PixelSpacing[0]),     # alto (mm)
+                        float(ds.PixelSpacing[1]),     # largo (mm)
+                        float(ds.SliceThickness))      # ancho (mm)
